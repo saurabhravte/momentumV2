@@ -49,11 +49,16 @@
   --destructive-foreground: oklch(0.985 0.002 286);
 
   /* semantic urgency scale (priority inbox) */
-  --urgent: oklch(0.62 0.23 18);      /* rose-red  */
-  --reply: oklch(0.74 0.17 64);       /* amber     */
-  --waiting: oklch(0.58 0.15 235);    /* blue      */
-  --done: oklch(0.7 0.15 162);        /* emerald   */
-  --fyi: oklch(0.6 0.02 286);         /* slate     */
+  --urgent: oklch(0.62 0.23 18);
+  /* rose-red  */
+  --reply: oklch(0.74 0.17 64);
+  /* amber     */
+  --waiting: oklch(0.58 0.15 235);
+  /* blue      */
+  --done: oklch(0.7 0.15 162);
+  /* emerald   */
+  --fyi: oklch(0.6 0.02 286);
+  /* slate     */
 
   /* per-source brand dots */
   --source-gmail: oklch(0.62 0.21 25);
@@ -138,7 +143,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-sans), ui-monospace, monospace;
 }
 
 * {
