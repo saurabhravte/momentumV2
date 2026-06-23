@@ -63,7 +63,13 @@ export function Stagger({
   );
 }
 
-Stagger.Item = function StaggerItem({
+/**
+ * One item inside a {@link Stagger}. Exported as its own component rather than
+ * a `Stagger.Item` property: across the Server/Client component boundary a
+ * client component is only a module reference, so attached properties like
+ * `.Item` are `undefined` on the server and crash prerendering.
+ */
+export function StaggerItem({
   children,
   className,
 }: {
@@ -75,7 +81,7 @@ Stagger.Item = function StaggerItem({
       {children}
     </motion.div>
   );
-};
+}
 
 /** Hero entrance used once at the top of the page on load. */
 export function HeroIn({

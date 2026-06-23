@@ -1,4 +1,4 @@
-import { Inngest } from "inngest";
+import { eventType, Inngest, staticSchema } from "inngest";
 
 /**
  * Inngest client. Used for two things in Momentum:
@@ -8,17 +8,25 @@ import { Inngest } from "inngest";
  */
 export const inngest = new Inngest({ id: "momentum" });
 
-/** Event payload shapes Momentum emits (used when sending typed events). */
-export type AppEvents = {
-  "gmail/message.received": {
-    data: { messageId: string; subject: string; from: string; snippet: string };
-  };
-  "app/log.captured": {
-    data: {
-      level: "info" | "warn" | "error";
-      source: string;
-      message: string;
-      meta?: Record<string, unknown>;
-    };
-  };
-};
+/**
+ * Typed event definitions. Using `eventType` + `staticSchema` gives compile-time
+ * types for `event.data` in every function (used as triggers below) without
+ * pulling in a runtime validation library.
+ */
+export const gmailMessageReceived = eventType("gmail/message.received", {
+  schema: staticSchema<{
+    messageId: string;
+    subject: string;
+    from: string;
+    snippet: string;
+  }>(),
+});
+
+export const appLogCaptured = eventType("app/log.captured", {
+  schema: staticSchema<{
+    level: "info" | "warn" | "error";
+    source: string;
+    message: string;
+    meta?: Record<string, unknown>;
+  }>(),
+});

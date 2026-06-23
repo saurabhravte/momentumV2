@@ -49,7 +49,7 @@ export default function InboxPage() {
   const triage = api.ai.classifyInbox.useMutation({
     onSuccess: (rows) => {
       setPriorities(
-        Object.fromEntries(rows.map((r) => [r.id, r.priority])) as Record<string, Priority>,
+        Object.fromEntries(rows.map((r) => [r.id, r.priority])),
       );
     },
   });
@@ -192,7 +192,7 @@ export default function InboxPage() {
           <CardContent className="p-4">
             <div className="mb-1 flex items-center gap-2">
               <Sparkles className="size-4 text-primary" />
-              <span className="text-sm font-medium">Here's what you missed</span>
+              <span className="text-sm font-medium">Here&apos;s what you missed</span>
             </div>
             <div className="whitespace-pre-wrap text-sm text-muted-foreground">{digest}</div>
           </CardContent>
@@ -257,7 +257,7 @@ function Composer({ onClose }: { onClose: () => void }) {
 
   const send = api.gmail.sendEmail.useMutation({
     onSuccess: () => {
-      utils.gmail.searchEmails.invalidate();
+      void utils.gmail.searchEmails.invalidate();
       onClose();
     },
   });

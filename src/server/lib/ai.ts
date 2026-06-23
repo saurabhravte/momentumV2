@@ -1,10 +1,22 @@
 import OpenAI from "openai";
 
 /**
- * Single OpenAI client for the whole app (replaces V1's Anthropic/Claude usage).
+ * Lazily-instantiated OpenAI client (replaces V1's Anthropic/Claude usage).
+ *
+ * The SDK constructor throws when no API key is present, so creating the client
+ * at module load crashed `next build` (page-data collection) and any runtime
+ * import on deploys without a key — even though OPENAI_API_KEY is optional and
+ * every function below already degrades gracefully when it's unset. We build it
+ * on first use instead, caching the instance.
+ *
  * Models are cheap-by-default: classification/extraction use gpt-4o-mini.
  */
-export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let _openai: OpenAI | null = null;
+
+export function getOpenAI(): OpenAI {
+  _openai ??= new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return _openai;
+}
 
 const CLASSIFY_MODEL = "gpt-4o-mini";
 
@@ -29,7 +41,7 @@ export async function classifyEmail(input: {
     return { priority: "fyi", reason: "AI disabled (no API key)", needsAction: false };
   }
 
-  const res = await openai.chat.completions.create({
+  const res = await getOpenAI().chat.completions.create({
     model: CLASSIFY_MODEL,
     temperature: 0,
     response_format: { type: "json_object" },
@@ -52,7 +64,7 @@ export async function classifyEmail(input: {
   try {
     const parsed = JSON.parse(res.choices[0]?.message.content ?? "{}") as Partial<EmailClassification>;
     const priority: Priority = ["urgent", "reply", "waiting", "fyi"].includes(parsed.priority as string)
-      ? (parsed.priority as Priority)
+      ? parsed.priority!
       : "fyi";
     return {
       priority,
@@ -69,7 +81,7 @@ export async function summarizeActivity(items: string[]): Promise<string> {
   if (!process.env.OPENAI_API_KEY || items.length === 0) {
     return "Nothing new to catch up on.";
   }
-  const res = await openai.chat.completions.create({
+  const res = await getOpenAI().chat.completions.create({
     model: CLASSIFY_MODEL,
     temperature: 0.3,
     messages: [
@@ -103,7 +115,7 @@ export async function parseCommand(text: string): Promise<CommandAction> {
   if (!process.env.OPENAI_API_KEY) {
     return { action: "unknown", message: "AI is not configured." };
   }
-  const res = await openai.chat.completions.create({
+  const res = await getOpenAI().chat.completions.create({
     model: CLASSIFY_MODEL,
     temperature: 0,
     response_format: { type: "json_object" },

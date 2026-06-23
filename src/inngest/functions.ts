@@ -1,4 +1,4 @@
-import { inngest } from "./client";
+import { appLogCaptured, gmailMessageReceived, inngest } from "./client";
 import { classifyEmail, summarizeActivity } from "@/server/lib/ai";
 
 /**
@@ -11,7 +11,7 @@ export const classifyInboundEmail = inngest.createFunction(
   {
     id: "classify-inbound-email",
     concurrency: 10,
-    triggers: [{ event: "gmail/message.received" }],
+    triggers: [{ event: gmailMessageReceived }],
   },
   async ({ event, step }) => {
     const classification = await step.run("classify", () =>
@@ -47,7 +47,7 @@ export const aiLogMonitor = inngest.createFunction(
     id: "ai-log-monitor",
     // Batch logs so we summarize many at once instead of one LLM call per log.
     batchEvents: { maxSize: 25, timeout: "30s" },
-    triggers: [{ event: "app/log.captured" }],
+    triggers: [{ event: appLogCaptured }],
   },
   async ({ events, step }) => {
     const lines = events.map(

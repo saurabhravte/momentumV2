@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight } from "lucide-react";
-
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

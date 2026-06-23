@@ -177,7 +177,7 @@ pnpm inngest:dev`}</Code>
             <span className="text-sm">
               Open{" "}
               <span className="font-mono text-xs">http://localhost:3000</span> —
-              sign in, connect Google, and you're live.
+              sign in, connect Google, and you&apos;re live.
             </span>
           </div>
         </Step>
@@ -187,7 +187,7 @@ pnpm inngest:dev`}</Code>
       <section className="mt-16">
         <Reveal className="mb-4">
           <h2 className="text-muted-foreground text-sm font-medium tracking-wide uppercase">
-            Why it's worth it
+            Why it&apos;s worth it
           </h2>
         </Reveal>
         <Reveal delay={0.05}>

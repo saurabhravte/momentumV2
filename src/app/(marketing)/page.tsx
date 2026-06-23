@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/marketing/logo";
 import { ActivityShowcase } from "@/components/marketing/activity-showcase";
 import { ConnectShowcase } from "@/components/marketing/connect-showcase";
-import { Reveal, Stagger, HeroIn } from "@/components/marketing/motion";
+import { Reveal, Stagger, StaggerItem, HeroIn } from "@/components/marketing/motion";
 
 const features = [
   {
@@ -180,7 +180,7 @@ export default function LandingPage() {
         </Reveal>
         <Stagger className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f) => (
-            <Stagger.Item key={f.title}>
+            <StaggerItem key={f.title}>
               <Card className="h-full transition-shadow hover:shadow-md">
                 <CardContent className="p-6">
                   <div className="mb-4 flex items-center justify-between">
@@ -205,7 +205,7 @@ export default function LandingPage() {
                   </p>
                 </CardContent>
               </Card>
-            </Stagger.Item>
+            </StaggerItem>
           ))}
         </Stagger>
       </section>
@@ -235,7 +235,7 @@ export default function LandingPage() {
               d: "Reply, schedule, or ask the ⌘K agent. Approve, and it's done.",
             },
           ].map((s) => (
-            <Stagger.Item key={s.n}>
+            <StaggerItem key={s.n}>
               <div className="bg-card h-full rounded-xl border p-6">
                 <span className="text-primary text-sm font-semibold">
                   {s.n}
@@ -243,7 +243,7 @@ export default function LandingPage() {
                 <h3 className="mt-2 text-lg font-medium">{s.t}</h3>
                 <p className="text-muted-foreground mt-1.5 text-sm">{s.d}</p>
               </div>
-            </Stagger.Item>
+            </StaggerItem>
           ))}
         </Stagger>
       </section>

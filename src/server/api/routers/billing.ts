@@ -9,7 +9,8 @@ import {
   verifySubscriptionSignature,
   activatePro,
   deactivatePro,
-  razorpay,
+  getRazorpay,
+  billingEnabled,
   PRO_PLAN,
 } from "@/server/lib/billing";
 
@@ -27,11 +28,18 @@ export const billingRouter = createTRPCRouter({
       status: sub?.status ?? null,
       currentPeriodEnd: sub?.currentPeriodEnd ?? null,
       proPlan: PRO_PLAN,
+      billingEnabled: billingEnabled(),
     };
   }),
 
   /** Start a Pro subscription; returns the id the browser checkout opens with. */
   createSubscription: protectedProcedure.mutation(async ({ ctx }) => {
+    if (!billingEnabled()) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "Billing is not enabled on this deployment.",
+      });
+    }
     if (ctx.plan === "pro") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "Already on Pro." });
     }
@@ -87,7 +95,7 @@ export const billingRouter = createTRPCRouter({
       });
     }
     // cancel_at_cycle_end = 1 keeps access until the paid period ends.
-    await razorpay.subscriptions.cancel(sub.razorpaySubscriptionId, true);
+    await getRazorpay().subscriptions.cancel(sub.razorpaySubscriptionId, true);
     await deactivatePro(ctx.user.id, "cancelled");
     return { ok: true };
   }),

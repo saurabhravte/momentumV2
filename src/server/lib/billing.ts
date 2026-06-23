@@ -7,11 +7,39 @@ import { env } from "@/env";
 import { db } from "@/server/db";
 import { subscriptions } from "@/server/db/schema";
 
-/** Single Razorpay client for the server. */
-export const razorpay = new Razorpay({
-  key_id: env.RAZORPAY_KEY_ID,
-  key_secret: env.RAZORPAY_KEY_SECRET,
-});
+/**
+ * Whether billing is configured. When false the app runs in free-only mode:
+ * upgrade flows return a clear error and webhooks/signature checks short-circuit
+ * instead of crashing. Enable by setting all four RAZORPAY_* env vars.
+ */
+export function billingEnabled(): boolean {
+  return Boolean(
+    env.RAZORPAY_KEY_ID &&
+      env.RAZORPAY_KEY_SECRET &&
+      env.RAZORPAY_PLAN_ID &&
+      env.RAZORPAY_WEBHOOK_SECRET,
+  );
+}
+
+/**
+ * Lazily-instantiated Razorpay client. Built on first use so the module can be
+ * imported (and the app can boot/build) without billing configured. Throws a
+ * clear error if a billing operation is attempted while disabled.
+ */
+let _razorpay: Razorpay | null = null;
+
+export function getRazorpay(): Razorpay {
+  if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
+    throw new Error(
+      "Billing is not configured. Set RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET to enable payments.",
+    );
+  }
+  _razorpay ??= new Razorpay({
+    key_id: env.RAZORPAY_KEY_ID,
+    key_secret: env.RAZORPAY_KEY_SECRET,
+  });
+  return _razorpay;
+}
 
 export const PRO_PLAN = {
   id: "pro",
@@ -31,7 +59,10 @@ export const PRO_PLAN = {
  * Returns the subscription id the browser checkout needs.
  */
 export async function createProSubscription(userId: string, email?: string) {
-  const sub = await razorpay.subscriptions.create({
+  if (!env.RAZORPAY_PLAN_ID) {
+    throw new Error("Billing is not configured (missing RAZORPAY_PLAN_ID).");
+  }
+  const sub = await getRazorpay().subscriptions.create({
     plan_id: env.RAZORPAY_PLAN_ID,
     total_count: 12, // 12 billing cycles; Razorpay auto-renews per plan period
     customer_notify: 1,
@@ -57,14 +88,15 @@ export function verifySubscriptionSignature(args: {
   signature: string;
 }) {
   const expected = crypto
-    .createHmac("sha256", env.RAZORPAY_KEY_SECRET)
+    .createHmac("sha256", env.RAZORPAY_KEY_SECRET ?? "")
     .update(`${args.paymentId}|${args.subscriptionId}`)
     .digest("hex");
-  return timingSafeEqual(expected, args.signature);
+  return Boolean(env.RAZORPAY_KEY_SECRET) && timingSafeEqual(expected, args.signature);
 }
 
 /** Verify a webhook body against the X-Razorpay-Signature header. */
 export function verifyWebhookSignature(rawBody: string, signature: string) {
+  if (!env.RAZORPAY_WEBHOOK_SECRET) return false;
   const expected = crypto
     .createHmac("sha256", env.RAZORPAY_WEBHOOK_SECRET)
     .update(rawBody)

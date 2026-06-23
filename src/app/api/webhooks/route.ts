@@ -3,6 +3,23 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { corsair } from '@/server/corsair';
 import { inngest } from '@/inngest/client';
+import { env } from '@/env';
+
+/** Loosely-typed shape of the Gmail message payload Corsair forwards. */
+interface GmailWebhookMessage {
+  id?: string;
+  messageId?: string;
+  subject?: string;
+  from?: string;
+  snippet?: string;
+  data?: { subject?: string; from?: string; snippet?: string };
+}
+
+interface GmailWebhookBody {
+  message?: GmailWebhookMessage;
+  data?: GmailWebhookMessage;
+  [key: string]: unknown;
+}
 
 export async function POST(request: NextRequest) {
 	const headers: Record<string, string> = {};
@@ -12,16 +29,19 @@ export async function POST(request: NextRequest) {
 
 	const contentType = request.headers.get('content-type');
 
-	let body: string | Record<string, unknown>;
+	let body: string | GmailWebhookBody;
 
 	if (contentType?.includes('application/json')) {
-		body = await request.json();
+		body = (await request.json()) as GmailWebhookBody;
 	} else {
 		const text = await request.text();
-		body = text && text.trim() ? text : {};
+		body = text?.trim() ? text : {};
 	}
 
-	const tenantId = 'dev'
+	// Webhooks have no signed-in user, so they run under the global tenant
+	// (TENANT_ID), matching getTenant()'s fallback. Hardcoding 'dev' here meant
+	// production webhooks were processed under the wrong tenant.
+	const tenantId = env.TENANT_ID;
 
 	const result = await processWebhook(corsair, headers, body, { tenantId });
 
@@ -31,8 +51,7 @@ export async function POST(request: NextRequest) {
 	// to Inngest (off the request path) for cheap LLM priority classification.
 	try {
 		if (result.plugin === 'gmail' && typeof body === 'object') {
-			const data = body as Record<string, any>;
-			const msg = data.message ?? data.data ?? data;
+			const msg: GmailWebhookMessage = body.message ?? body.data ?? body;
 			await inngest.send({
 				name: 'gmail/message.received',
 				data: {

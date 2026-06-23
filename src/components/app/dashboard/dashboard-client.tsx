@@ -341,7 +341,7 @@ export function DashboardClient({
           ) : (
             <motion.div {...fade(2)} className="bg-card rounded-xl border p-5">
               <Sparkline />
-              <p className="mt-2 text-sm font-medium">You're on Pro</p>
+              <p className="mt-2 text-sm font-medium">You&apos;re on Pro</p>
               <p className="text-muted-foreground mt-1 text-xs">
                 All AI features are unlocked. Manage your plan anytime.
               </p>

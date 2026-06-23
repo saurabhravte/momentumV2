@@ -40,7 +40,7 @@ export function BillingClient() {
           Billing &amp; plan
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          You're on the{" "}
+          You&apos;re on the{" "}
           <Badge
             variant={isPro ? "default" : "secondary"}
             className="align-middle"

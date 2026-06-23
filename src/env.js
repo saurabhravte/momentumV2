@@ -26,20 +26,22 @@ export const env = createEnv({
     INNGEST_SIGNING_KEY: z.string().optional(),
 
     // ── Razorpay (billing) ─────────────────────────────────────────────
-    // Server-side secret + the subscription plan id you create in the
-    // Razorpay dashboard (Subscriptions → Plans). The webhook secret is set
-    // when you register the webhook endpoint.
-    RAZORPAY_KEY_ID: z.string().min(1),
-    RAZORPAY_KEY_SECRET: z.string().min(1),
-    RAZORPAY_PLAN_ID: z.string().min(1),
-    RAZORPAY_WEBHOOK_SECRET: z.string().min(1),
+    // Optional: when these are unset, billing is disabled gracefully (the app
+    // runs in free-only mode) rather than failing env validation at boot. Set
+    // all four to enable Pro subscriptions. The webhook secret is set when you
+    // register the webhook endpoint.
+    RAZORPAY_KEY_ID: z.string().min(1).optional(),
+    RAZORPAY_KEY_SECRET: z.string().min(1).optional(),
+    RAZORPAY_PLAN_ID: z.string().min(1).optional(),
+    RAZORPAY_WEBHOOK_SECRET: z.string().min(1).optional(),
   },
 
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url(),
     // Public key id is safe to expose — it is required by the Razorpay
-    // checkout.js script that runs in the browser.
-    NEXT_PUBLIC_RAZORPAY_KEY_ID: z.string().min(1),
+    // checkout.js script that runs in the browser. Optional so the client can
+    // build/run with billing disabled.
+    NEXT_PUBLIC_RAZORPAY_KEY_ID: z.string().min(1).optional(),
   },
 
   runtimeEnv: {

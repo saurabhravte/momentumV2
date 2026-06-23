@@ -122,10 +122,13 @@ export const gmailRouter = createTRPCRouter({
       });
 
       const headers = message.payload?.headers;
+      // Pick the first non-empty source. An empty extracted body should fall
+      // through to the snippet (then ""), which `??` alone would not do since
+      // "" is not nullish — so we filter on length explicitly instead.
       const body =
-        extractBodyFromPayload(message.payload) ||
-        message.snippet ||
-        "";
+        [extractBodyFromPayload(message.payload), message.snippet].find(
+          (v): v is string => typeof v === "string" && v.length > 0,
+        ) ?? "";
 
       return {
         id: message.id ?? input.id,

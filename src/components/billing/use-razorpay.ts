@@ -43,6 +43,9 @@ export function useRazorpay({ onSuccess }: { onSuccess?: () => void } = {}) {
       setError(null);
       setLoading(true);
       try {
+        if (!env.NEXT_PUBLIC_RAZORPAY_KEY_ID)
+          throw new Error("Billing is not enabled on this deployment.");
+
         const ok = await loadScript();
         if (!ok || !window.Razorpay)
           throw new Error("Could not load Razorpay checkout.");
@@ -68,7 +71,7 @@ export function useRazorpay({ onSuccess }: { onSuccess?: () => void } = {}) {
                 onSuccess?.();
                 resolve();
               } catch (e) {
-                reject(e as Error);
+                reject(e instanceof Error ? e : new Error(String(e)));
               }
             },
             modal: { ondismiss: () => reject(new Error("Checkout closed.")) },

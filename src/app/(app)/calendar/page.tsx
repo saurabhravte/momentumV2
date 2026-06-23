@@ -134,13 +134,13 @@ function EventComposer({
 
   const create = api.calendar.createDraft.useMutation({
     onSuccess: () => {
-      utils.calendar.searchEvents.invalidate();
+      void utils.calendar.searchEvents.invalidate();
       onClose();
     },
   });
   const invite = api.calendar.sendInvite.useMutation({
     onSuccess: () => {
-      utils.calendar.searchEvents.invalidate();
+      void utils.calendar.searchEvents.invalidate();
       onClose();
     },
   });
