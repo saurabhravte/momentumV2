@@ -10,6 +10,7 @@ import {
   KanbanSquare,
   Sparkles,
   Zap,
+  Blocks,
   Settings,
   CreditCard,
   LogOut,
@@ -33,8 +34,8 @@ const nav = [
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/board", label: "Board", icon: KanbanSquare },
   { href: "/catch-up", label: "Catch Me Up", icon: Zap },
+  { href: "/connections", label: "Connections", icon: Blocks },
   { href: "/billing", label: "Billing", icon: CreditCard },
-  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 const STORAGE_KEY = "momentum:sidebar-collapsed";
@@ -152,6 +153,22 @@ export function Sidebar({
       )}
 
       <div className="space-y-2 border-t pt-3">
+        {/* Settings lives at the bottom of the rail, above the account block. */}
+        <Link
+          href="/settings"
+          title={collapsed ? "Settings" : undefined}
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+            collapsed && "justify-center px-0",
+            pathname.startsWith("/settings")
+              ? "bg-primary/12 text-primary font-medium"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground",
+          )}
+        >
+          <Settings className="size-4 shrink-0" />
+          {!collapsed && "Settings"}
+        </Link>
+
         <div
           className={cn(
             "flex items-center gap-2 px-2",

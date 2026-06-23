@@ -7,6 +7,7 @@ import { kanbanRouter } from "@/server/api/routers/kanban";
 import { notificationsRouter } from "@/server/api/routers/notifications";
 import { preferencesRouter } from "@/server/api/routers/preferences";
 import { catchUpRouter } from "@/server/api/routers/catch-up";
+import { connectionsRouter } from "@/server/api/routers/connections";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 
 /**
@@ -24,6 +25,7 @@ export const appRouter = createTRPCRouter({
   notifications: notificationsRouter,
   preferences: preferencesRouter,
   catchUp: catchUpRouter,
+  connections: connectionsRouter,
 });
 
 // export type definition of API

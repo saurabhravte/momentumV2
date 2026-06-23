@@ -19,7 +19,12 @@ import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/marketing/logo";
 import { ActivityShowcase } from "@/components/marketing/activity-showcase";
 import { ConnectShowcase } from "@/components/marketing/connect-showcase";
-import { Reveal, Stagger, StaggerItem, HeroIn } from "@/components/marketing/motion";
+import {
+  Reveal,
+  Stagger,
+  StaggerItem,
+  HeroIn,
+} from "@/components/marketing/motion";
 
 const features = [
   {
@@ -345,7 +350,7 @@ export default function LandingPage() {
 
       <footer className="text-muted-foreground flex flex-col items-center gap-3 border-t py-10 text-sm md:flex-row md:justify-between">
         <Logo className="text-foreground text-sm" />
-        <p>© {new Date().getFullYear()} Momentum. Powered by Corsair.</p>
+        <p>© {new Date().getFullYear()} Momentum.</p>
       </footer>
     </main>
   );
