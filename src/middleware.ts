@@ -9,9 +9,13 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 export function middleware(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
-  const isProtected = ["/inbox", "/calendar", "/settings"].some((p) =>
-    request.nextUrl.pathname.startsWith(p),
-  );
+  const isProtected = [
+    "/dashboard",
+    "/inbox",
+    "/calendar",
+    "/settings",
+    "/billing",
+  ].some((p) => request.nextUrl.pathname.startsWith(p));
   if (isProtected && !sessionCookie) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
@@ -19,5 +23,11 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/inbox/:path*", "/calendar/:path*", "/settings/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/inbox/:path*",
+    "/calendar/:path*",
+    "/settings/:path*",
+    "/billing/:path*",
+  ],
 };

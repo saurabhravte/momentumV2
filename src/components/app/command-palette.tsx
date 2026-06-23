@@ -3,7 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Command } from "cmdk";
-import { Sparkles, Inbox, CalendarDays, Send, Search, Loader2 } from "lucide-react";
+import {
+  Sparkles,
+  Inbox,
+  CalendarDays,
+  Send,
+  Search,
+  Loader2,
+} from "lucide-react";
 
 import { api } from "@/trpc/react";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +38,9 @@ export function CommandPalette() {
           setOpen(false);
           break;
         case "compose":
-          setProposal(`Draft email to ${cmd.to ?? "—"} · "${cmd.subject ?? ""}"`);
+          setProposal(
+            `Draft email to ${cmd.to ?? "—"} · "${cmd.subject ?? ""}"`,
+          );
           break;
         case "schedule":
           setProposal(
@@ -43,7 +52,17 @@ export function CommandPalette() {
           setOpen(false);
           break;
         default:
-          setProposal(cmd.action === "unknown" ? cmd.message : "Not sure how to do that.");
+          setProposal(
+            cmd.action === "unknown" ? cmd.message : "Not sure how to do that.",
+          );
+      }
+    },
+    onError: (err) => {
+      // AI is a Pro feature — surface the upgrade path instead of a raw error.
+      if (err.data?.code === "FORBIDDEN" || err.message.includes("PAYWALL")) {
+        setProposal("__PAYWALL__");
+      } else {
+        setProposal("Something went wrong. Please try again.");
       }
     },
   });
@@ -72,12 +91,12 @@ export function CommandPalette() {
       onClick={() => setOpen(false)}
     >
       <div
-        className="w-full max-w-lg overflow-hidden rounded-xl border bg-popover shadow-2xl"
+        className="bg-popover w-full max-w-lg overflow-hidden rounded-xl border shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <Command shouldFilter={!query.includes(" ")} className="bg-popover">
           <div className="flex items-center gap-2 border-b px-4">
-            <Sparkles className="size-4 text-primary" />
+            <Sparkles className="text-primary size-4" />
             <Command.Input
               autoFocus
               value={query}
@@ -92,38 +111,93 @@ export function CommandPalette() {
                 }
               }}
               placeholder="Ask in plain English, or run a command…"
-              className="h-12 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              className="placeholder:text-muted-foreground h-12 flex-1 bg-transparent text-sm outline-none"
             />
-            {parse.isPending && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+            {parse.isPending && (
+              <Loader2 className="text-muted-foreground size-4 animate-spin" />
+            )}
           </div>
 
           <Command.List className="max-h-80 overflow-y-auto p-2">
             {proposal ? (
-              <div className="rounded-lg border border-primary/30 bg-primary/8 p-4">
-                <Badge variant="default" className="mb-2">Proposed action</Badge>
-                <p className="text-sm">{proposal}</p>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  Approval-first: connect the Corsair MCP to execute. (See MIGRATION.md)
-                </p>
-              </div>
+              proposal === "__PAYWALL__" ? (
+                <div className="border-primary/30 bg-primary/8 rounded-lg border p-4 text-center">
+                  <Badge variant="default" className="mb-2">
+                    Pro feature
+                  </Badge>
+                  <p className="text-sm">
+                    The ⌘K command agent is part of Momentum Pro.
+                  </p>
+                  <button
+                    onClick={() => {
+                      router.push("/billing");
+                      setOpen(false);
+                    }}
+                    className="bg-primary text-primary-foreground mt-3 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium"
+                  >
+                    <Sparkles className="size-4" /> Upgrade to Pro
+                  </button>
+                </div>
+              ) : (
+                <div className="border-primary/30 bg-primary/8 rounded-lg border p-4">
+                  <Badge variant="default" className="mb-2">
+                    Proposed action
+                  </Badge>
+                  <p className="text-sm">{proposal}</p>
+                  <p className="text-muted-foreground mt-3 text-xs">
+                    Approval-first: connect the Corsair MCP to execute. (See
+                    MIGRATION.md)
+                  </p>
+                </div>
+              )
             ) : (
               <>
-                <Command.Empty className="px-3 py-6 text-center text-sm text-muted-foreground">
+                <Command.Empty className="text-muted-foreground px-3 py-6 text-center text-sm">
                   Press Enter to ask Momentum to figure it out.
                 </Command.Empty>
-                <Command.Group heading="Go to" className="px-1 text-xs text-muted-foreground">
-                  <Item icon={Inbox} onSelect={() => { router.push("/inbox"); setOpen(false); }}>
+                <Command.Group
+                  heading="Go to"
+                  className="text-muted-foreground px-1 text-xs"
+                >
+                  <Item
+                    icon={Inbox}
+                    onSelect={() => {
+                      router.push("/inbox");
+                      setOpen(false);
+                    }}
+                  >
                     Inbox
                   </Item>
-                  <Item icon={CalendarDays} onSelect={() => { router.push("/calendar"); setOpen(false); }}>
+                  <Item
+                    icon={CalendarDays}
+                    onSelect={() => {
+                      router.push("/calendar");
+                      setOpen(false);
+                    }}
+                  >
                     Calendar
                   </Item>
                 </Command.Group>
-                <Command.Group heading="Actions" className="px-1 text-xs text-muted-foreground">
-                  <Item icon={Send} onSelect={() => { router.push("/inbox?compose=1"); setOpen(false); }}>
+                <Command.Group
+                  heading="Actions"
+                  className="text-muted-foreground px-1 text-xs"
+                >
+                  <Item
+                    icon={Send}
+                    onSelect={() => {
+                      router.push("/inbox?compose=1");
+                      setOpen(false);
+                    }}
+                  >
                     Compose email
                   </Item>
-                  <Item icon={Search} onSelect={() => { router.push("/inbox"); setOpen(false); }}>
+                  <Item
+                    icon={Search}
+                    onSelect={() => {
+                      router.push("/inbox");
+                      setOpen(false);
+                    }}
+                  >
                     Search mail
                   </Item>
                 </Command.Group>
@@ -148,9 +222,9 @@ function Item({
   return (
     <Command.Item
       onSelect={onSelect}
-      className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+      className="text-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm"
     >
-      <Icon className="size-4 text-muted-foreground" />
+      <Icon className="text-muted-foreground size-4" />
       {children}
     </Command.Item>
   );

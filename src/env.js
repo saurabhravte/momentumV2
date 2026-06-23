@@ -24,10 +24,22 @@ export const env = createEnv({
     // Inngest (optional in local dev; required in prod)
     INNGEST_EVENT_KEY: z.string().optional(),
     INNGEST_SIGNING_KEY: z.string().optional(),
+
+    // ── Razorpay (billing) ─────────────────────────────────────────────
+    // Server-side secret + the subscription plan id you create in the
+    // Razorpay dashboard (Subscriptions → Plans). The webhook secret is set
+    // when you register the webhook endpoint.
+    RAZORPAY_KEY_ID: z.string().min(1),
+    RAZORPAY_KEY_SECRET: z.string().min(1),
+    RAZORPAY_PLAN_ID: z.string().min(1),
+    RAZORPAY_WEBHOOK_SECRET: z.string().min(1),
   },
 
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url(),
+    // Public key id is safe to expose — it is required by the Razorpay
+    // checkout.js script that runs in the browser.
+    NEXT_PUBLIC_RAZORPAY_KEY_ID: z.string().min(1),
   },
 
   runtimeEnv: {
@@ -42,7 +54,12 @@ export const env = createEnv({
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
+    RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
+    RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
+    RAZORPAY_PLAN_ID: process.env.RAZORPAY_PLAN_ID,
+    RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_RAZORPAY_KEY_ID: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   emptyStringAsUndefined: true,
