@@ -18,8 +18,17 @@
   All colours are oklch for perceptually even contrast between modes.
 */
 
+@font-face {
+  font-family: "Google Sans Flex";
+  src: url("/fonts/GoogleSansFlex.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --radius: 0.75rem;
+  --font-sans: "Google Sans Flex", sans-serif;
 
   /* shared neutral base — warm slate, never pure white */
   --background: oklch(0.991 0.003 286);
@@ -143,7 +152,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --font-sans: var(--font-sans), ui-monospace, monospace;
+  --font-sans: "Google Sans Flex", sans-serif;
 }
 
 * {
