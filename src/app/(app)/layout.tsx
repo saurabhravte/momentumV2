@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/server/auth";
 import { Sidebar } from "@/components/app/sidebar";
+import { Topbar } from "@/components/app/topbar";
 import { CommandPalette } from "@/components/app/command-palette";
 
 export default async function AppLayout({
@@ -17,7 +18,10 @@ export default async function AppLayout({
   return (
     <div className="app-canvas flex min-h-screen">
       <Sidebar user={session.user} />
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="flex min-h-screen flex-1 flex-col overflow-y-auto">
+        <Topbar />
+        <div className="flex-1">{children}</div>
+      </main>
       <CommandPalette />
     </div>
   );

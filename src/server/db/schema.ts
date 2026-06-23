@@ -1,6 +1,71 @@
-import { pgTable, text, jsonb, timestamp } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  jsonb,
+  timestamp,
+  integer,
+} from "drizzle-orm/pg-core";
 
 import { user } from "./auth-schema";
+
+/**
+ * ── Kanban board ──────────────────────────────────────────────────────────
+ * One row per task, scoped to the owning user. `status` is the column the card
+ * lives in; `position` is a float so we can drop a card *between* two others by
+ * averaging their positions without renumbering the whole column.
+ *
+ * Modelled on the reference Kanban demo (To Do / In Progress / Done + drag &
+ * drop) but persisted per-user instead of living only in the DOM.
+ */
+export const KANBAN_COLUMNS = ["todo", "in_progress", "done"] as const;
+export type KanbanColumn = (typeof KANBAN_COLUMNS)[number];
+
+export const kanbanTasks = pgTable("kanban_tasks", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  // "todo" | "in_progress" | "done"
+  status: text("status").notNull().default("todo"),
+  position: integer("position").notNull().default(0),
+  // optional link back to the item that spawned this task (email id, etc.)
+  sourceRef: text("source_ref"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type KanbanTask = typeof kanbanTasks.$inferSelect;
+
+/**
+ * ── User preferences ──────────────────────────────────────────────────────
+ * App-level customisation the user controls from Settings. Auth-owned fields
+ * (name, image, email) stay in the Better Auth `user` table and are edited via
+ * authClient.updateUser; this table holds everything that is purely product
+ * preference so we never fight the auth adapter over schema ownership.
+ */
+export const userPreferences = pgTable("user_preferences", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  // "auto" follows the time of day; otherwise a fixed greeting tone.
+  greetingStyle: text("greeting_style").notNull().default("auto"),
+  // UI density for lists / cards.
+  density: text("density").notNull().default("comfortable"),
+  // which connector colour drives accents on the dashboard.
+  accentSource: text("accent_source").notNull().default("gmail"),
+  // master switch for the notification bell.
+  notificationsEnabled: text("notifications_enabled").notNull().default("on"),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type UserPreferences = typeof userPreferences.$inferSelect;
 
 export const corsairIntegrations = pgTable("corsair_integrations", {
   id: text("id").primaryKey(),

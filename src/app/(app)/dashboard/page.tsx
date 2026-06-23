@@ -15,6 +15,9 @@ export default async function DashboardPage() {
   const billing = await api.billing.status();
 
   return (
-    <DashboardClient name={session.user.name ?? "there"} plan={billing.plan} />
+    <DashboardClient
+      name={session.user.name ?? "there"}
+      plan={billing.plan}
+    />
   );
 }
