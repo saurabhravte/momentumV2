@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { getTenant } from "@/server/lib/tenant";
+import { ensureCorsairGoogle } from "@/server/lib/corsair-bootstrap";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
 const paginationSchema = z.object({
@@ -126,6 +127,7 @@ export const calendarRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      await ensureCorsairGoogle(ctx.user.id);
       const tenant = getTenant(ctx.user.id);
       const result = await tenant.googlecalendar.api.events.getMany({
         calendarId: "primary",

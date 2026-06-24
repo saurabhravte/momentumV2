@@ -31,6 +31,12 @@ const DESC: Record<string, string> = {
   github: "Reviews, mentions and CI in one place.",
 };
 
+// What a user pastes to connect a token-based tool.
+const TOKEN_PROMPT: Record<string, string> = {
+  slack: "Paste your Slack token (starts with xoxb- or xoxp-):",
+  github: "Paste a GitHub personal access token (starts with ghp_):",
+};
+
 export function ConnectionsClient() {
   const utils = api.useUtils();
   const status = api.connections.status.useQuery();
@@ -38,27 +44,66 @@ export function ConnectionsClient() {
 
   const refreshInbox = api.gmail.refreshInbox.useMutation();
   const refreshEvents = api.calendar.refreshEvents.useMutation();
+  const connectGoogle = api.connections.connectGoogle.useMutation();
+  const connectToken = api.connections.connectToken.useMutation();
   const disconnect = api.connections.disconnect.useMutation();
 
   const week = getWeekBounds(0);
 
-  const sync = async (key: string) => {
+  // Single place to refresh all server state touched by a connection change.
+  const revalidate = async () => {
+    await Promise.all([
+      utils.connections.status.invalidate(),
+      utils.dashboard.overview.invalidate(),
+    ]);
+  };
+
+  const syncData = async (key: string) => {
+    if (key === "gmail") await refreshInbox.mutateAsync();
+    if (key === "googlecalendar")
+      await refreshEvents.mutateAsync({
+        weekStart: week.start.toISOString(),
+        weekEnd: week.end.toISOString(),
+      });
+  };
+
+  // Connect (and immediately sync) a tool.
+  const connect = async (key: string, kind: string) => {
     setBusy(key);
     try {
-      if (key === "gmail") await refreshInbox.mutateAsync();
-      if (key === "googlecalendar")
-        await refreshEvents.mutateAsync({
-          weekStart: week.start.toISOString(),
-          weekEnd: week.end.toISOString(),
+      if (kind === "google") {
+        await connectGoogle.mutateAsync();
+        await syncData(key);
+      } else if (kind === "token") {
+        const token = window.prompt(TOKEN_PROMPT[key] ?? "Paste your token:");
+        if (!token) return;
+        await connectToken.mutateAsync({
+          key: key as "slack" | "github",
+          token,
         });
-      await utils.connections.status.invalidate();
-      await utils.dashboard.overview.invalidate();
+      }
+      await revalidate();
+    } catch (err) {
+      window.alert(
+        err instanceof Error ? err.message : "Couldn't connect. Try again.",
+      );
     } finally {
       setBusy(null);
     }
   };
 
-  const doDisconnect = async (key: "gmail" | "googlecalendar", name: string) => {
+  // Re-sync an already-connected tool.
+  const sync = async (key: string) => {
+    setBusy(key);
+    try {
+      await syncData(key);
+      await revalidate();
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const doDisconnect = async (key: string, name: string) => {
     if (
       !window.confirm(
         `Disconnect ${name}? This removes its synced data from Momentum. You can reconnect and sync again anytime.`,
@@ -67,9 +112,10 @@ export function ConnectionsClient() {
       return;
     setBusy(key);
     try {
-      await disconnect.mutateAsync({ key });
-      await utils.connections.status.invalidate();
-      await utils.dashboard.overview.invalidate();
+      await disconnect.mutateAsync({
+        key: key as "gmail" | "googlecalendar" | "slack" | "github",
+      });
+      await revalidate();
     } finally {
       setBusy(null);
     }
@@ -89,8 +135,7 @@ export function ConnectionsClient() {
           const Icon = ICONS[tool.source] ?? Plug;
           const col = `var(--source-${tool.source})`;
           const isBusy = busy === tool.key;
-          const connectable =
-            tool.key === "gmail" || tool.key === "googlecalendar";
+          const canSync = tool.key === "gmail" || tool.key === "googlecalendar";
 
           return (
             <div
@@ -144,50 +189,45 @@ export function ConnectionsClient() {
                   </Button>
                 ) : tool.connected ? (
                   <>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="flex-1"
-                      disabled={isBusy}
-                      onClick={() => sync(tool.key)}
-                    >
-                      {isBusy ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <RefreshCw className="size-4" />
-                      )}
-                      Sync
-                    </Button>
-                    {connectable && (
+                    {canSync && (
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="secondary"
                         className="flex-1"
                         disabled={isBusy}
-                        onClick={() =>
-                          doDisconnect(
-                            tool.key as "gmail" | "googlecalendar",
-                            tool.name,
-                          )
-                        }
+                        onClick={() => sync(tool.key)}
                       >
-                        Disconnect
+                        {isBusy ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="size-4" />
+                        )}
+                        Sync
                       </Button>
                     )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      disabled={isBusy}
+                      onClick={() => doDisconnect(tool.key, tool.name)}
+                    >
+                      Disconnect
+                    </Button>
                   </>
                 ) : (
                   <Button
                     size="sm"
                     className="flex-1"
                     disabled={isBusy}
-                    onClick={() => sync(tool.key)}
+                    onClick={() => connect(tool.key, tool.kind)}
                   >
                     {isBusy ? (
                       <Loader2 className="size-4 animate-spin" />
                     ) : (
                       <Plug className="size-4" />
                     )}
-                    Connect &amp; sync
+                    Connect
                   </Button>
                 )}
               </div>
@@ -197,8 +237,9 @@ export function ConnectionsClient() {
       </div>
 
       <p className="text-muted-foreground mt-6 text-xs">
-        Gmail and Calendar connect through your Google sign-in. Disconnecting
-        removes synced data from Momentum but never touches your Google account.
+        Gmail and Calendar connect through your Google sign-in. Slack and GitHub
+        connect with a token you paste. Disconnecting removes synced data from
+        Momentum but never touches the underlying account.
       </p>
     </div>
   );
@@ -232,8 +273,8 @@ function StatusPill({
 
 // Render placeholder cards while the status query loads.
 const CATALOG_SKELETON = [
-  { key: "gmail", name: "Gmail", source: "gmail", configured: true, connected: false, itemCount: 0, lastSyncedAt: null },
-  { key: "googlecalendar", name: "Calendar", source: "calendar", configured: true, connected: false, itemCount: 0, lastSyncedAt: null },
-  { key: "slack", name: "Slack", source: "slack", configured: false, connected: false, itemCount: 0, lastSyncedAt: null },
-  { key: "github", name: "GitHub", source: "github", configured: false, connected: false, itemCount: 0, lastSyncedAt: null },
+  { key: "gmail", name: "Gmail", source: "gmail", configured: true, kind: "google", connected: false, itemCount: 0, lastSyncedAt: null },
+  { key: "googlecalendar", name: "Calendar", source: "calendar", configured: true, kind: "google", connected: false, itemCount: 0, lastSyncedAt: null },
+  { key: "slack", name: "Slack", source: "slack", configured: true, kind: "token", connected: false, itemCount: 0, lastSyncedAt: null },
+  { key: "github", name: "GitHub", source: "github", configured: true, kind: "token", connected: false, itemCount: 0, lastSyncedAt: null },
 ] as const;

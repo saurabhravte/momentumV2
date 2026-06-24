@@ -6,6 +6,7 @@ import {
   getHeader,
 } from "@/server/lib/email";
 import { getTenant } from "@/server/lib/tenant";
+import { ensureCorsairGoogle } from "@/server/lib/corsair-bootstrap";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
 const paginationSchema = z.object({
@@ -160,6 +161,7 @@ export const gmailRouter = createTRPCRouter({
     }),
 
   refreshInbox: protectedProcedure.mutation(async ({ ctx }) => {
+    await ensureCorsairGoogle(ctx.user.id);
     const tenant = getTenant(ctx.user.id);
     const result = await tenant.gmail.api.threads.list({ maxResults: 50 });
     return {

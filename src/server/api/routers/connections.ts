@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { and, eq, inArray, sql } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import { setupCorsair } from "corsair";
 
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { corsair } from "@/server/corsair";
+import { ensureCorsairGoogle } from "@/server/lib/corsair-bootstrap";
 import {
   corsairAccounts,
   corsairIntegrations,
@@ -10,27 +14,28 @@ import {
 } from "@/server/db/schema";
 
 /**
- * Connections — one place to see every tool, its live status, and sync /
- * disconnect it. Status is derived from the user's own Corsair tables (an
- * `account` row for the integration under this tenant = connected, plus a cached
- * entity count), so it never lies about what's actually wired up.
+ * Connections — one place to see every tool, its live status, and connect /
+ * sync / disconnect it. Status is derived from the user's own Corsair tables
+ * (an `account` row for the integration under this tenant = connected, plus a
+ * cached entity count), so it never lies about what's actually wired up.
  *
- * Gmail & Calendar are bootstrapped from the Google sign-in. Slack & GitHub are
- * marked `configured: false` until their plugins are registered in
- * src/server/corsair.ts — the card shows a "coming soon" state instead of a
- * fake connect button.
+ * - Gmail & Calendar (OAuth) reuse the Google sign-in grant — connecting just
+ *   bootstraps the Corsair account from the tokens Better Auth already stored.
+ * - Slack & GitHub (API-key/token) are connected by pasting a token, which is
+ *   stored encrypted per-tenant by Corsair.
  */
 
 // Corsair integration `name` → product metadata for the UI.
 const CATALOG = [
-  { key: "gmail", name: "Gmail", source: "gmail", configured: true, syncPath: "gmail.refreshInbox" },
-  { key: "googlecalendar", name: "Calendar", source: "calendar", configured: true, syncPath: "calendar.refreshEvents" },
-  { key: "slack", name: "Slack", source: "slack", configured: false, syncPath: null },
-  { key: "github", name: "GitHub", source: "github", configured: false, syncPath: null },
+  { key: "gmail", name: "Gmail", source: "gmail", configured: true, kind: "google" },
+  { key: "googlecalendar", name: "Calendar", source: "calendar", configured: true, kind: "google" },
+  { key: "slack", name: "Slack", source: "slack", configured: true, kind: "token" },
+  { key: "github", name: "GitHub", source: "github", configured: true, kind: "token" },
 ] as const;
 
 type IntegrationKey = (typeof CATALOG)[number]["key"];
-const CONNECTABLE = ["gmail", "googlecalendar"] as const;
+const ALL_KEYS = ["gmail", "googlecalendar", "slack", "github"] as const;
+const TOKEN_KEYS = ["slack", "github"] as const;
 
 export const connectionsRouter = createTRPCRouter({
   /** Per-tool connection status + cached item counts for the current user. */
@@ -73,6 +78,7 @@ export const connectionsRouter = createTRPCRouter({
         name: tool.name,
         source: tool.source,
         configured: tool.configured,
+        kind: tool.kind,
         connected: Boolean(account),
         itemCount: account ? (countByAccount.get(account.accountId) ?? 0) : 0,
         lastSyncedAt: account?.updatedAt ?? null,
@@ -81,12 +87,47 @@ export const connectionsRouter = createTRPCRouter({
   }),
 
   /**
+   * Connect Gmail / Calendar by reusing the Google sign-in grant. Bootstraps the
+   * Corsair account from the tokens Better Auth already stored, then the normal
+   * gmail.refreshInbox / calendar.refreshEvents sync can run.
+   */
+  connectGoogle: protectedProcedure.mutation(async ({ ctx }) => {
+    const ok = await ensureCorsairGoogle(ctx.user.id);
+    if (!ok) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message:
+          "No Google grant found. Sign out and sign in with Google again to grant Gmail + Calendar access.",
+      });
+    }
+    return { connected: true };
+  }),
+
+  /**
+   * Connect Slack / GitHub by storing a token (Slack bot/user token `xoxb-…`,
+   * GitHub PAT `ghp_…`). Provisions the tenant's account row, then writes the
+   * api_key encrypted per-tenant via Corsair.
+   */
+  connectToken: protectedProcedure
+    .input(z.object({ key: z.enum(TOKEN_KEYS), token: z.string().min(10) }))
+    .mutation(async ({ ctx, input }) => {
+      await setupCorsair(corsair, { tenantId: ctx.user.id });
+      const tenant = corsair.withTenant(ctx.user.id);
+      const token = input.token.trim();
+      if (input.key === "slack") {
+        await tenant.slack.keys.set_api_key(token);
+      } else {
+        await tenant.github.keys.set_api_key(token);
+      }
+      return { connected: true };
+    }),
+
+  /**
    * Disconnect a tool: removes its cached data and account row for this tenant.
-   * A genuine teardown (not a flag) — reconnecting re-bootstraps from the Google
-   * grant on the next sync. Slack/GitHub are rejected since they aren't wired.
+   * A genuine teardown (not a flag) — reconnecting re-bootstraps the account.
    */
   disconnect: protectedProcedure
-    .input(z.object({ key: z.enum(CONNECTABLE) }))
+    .input(z.object({ key: z.enum(ALL_KEYS) }))
     .mutation(async ({ ctx, input }) => {
       const accounts = await ctx.db
         .select({ accountId: corsairAccounts.id })
