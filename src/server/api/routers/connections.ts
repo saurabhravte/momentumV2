@@ -27,10 +27,34 @@ import {
 
 // Corsair integration `name` → product metadata for the UI.
 const CATALOG = [
-  { key: "gmail", name: "Gmail", source: "gmail", configured: true, kind: "google" },
-  { key: "googlecalendar", name: "Calendar", source: "calendar", configured: true, kind: "google" },
-  { key: "slack", name: "Slack", source: "slack", configured: true, kind: "token" },
-  { key: "github", name: "GitHub", source: "github", configured: true, kind: "token" },
+  {
+    key: "gmail",
+    name: "Gmail",
+    source: "gmail",
+    configured: true,
+    kind: "google",
+  },
+  {
+    key: "googlecalendar",
+    name: "Calendar",
+    source: "calendar",
+    configured: true,
+    kind: "google",
+  },
+  {
+    key: "slack",
+    name: "Slack",
+    source: "slack",
+    configured: true,
+    kind: "token",
+  },
+  {
+    key: "github",
+    name: "GitHub",
+    source: "github",
+    configured: true,
+    kind: "token",
+  },
 ] as const;
 
 type IntegrationKey = (typeof CATALOG)[number]["key"];
@@ -139,7 +163,7 @@ export const connectionsRouter = createTRPCRouter({
         .where(
           and(
             eq(corsairAccounts.tenantId, ctx.user.id),
-            eq(corsairIntegrations.name, input.key as IntegrationKey),
+            eq(corsairIntegrations.name, input.key),
           ),
         );
 
