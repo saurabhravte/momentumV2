@@ -5,9 +5,9 @@ import { type Metadata } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TRPCReactProvider } from "@/trpc/react";
 
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Manrope } from "next/font/google";
 
-const font = Plus_Jakarta_Sans({
+const font = Manrope({
   subsets: ["latin"],
   variable: "--font-sans",
 });

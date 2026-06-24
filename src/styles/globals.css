@@ -5,17 +5,12 @@
 
 
 
-@font-face {
-  font-family: "Google Sans Flex";
-  src: url("/fonts/GoogleSansFlex.woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
+
 
 :root {
   --radius: 0.875rem;
-  --font-sans: "Google Sans Flex", sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* cool graphite base — never pure white, zero violet cast */
   --background: oklch(0.992 0.002 250);
@@ -146,7 +141,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --font-sans: "Google Sans Flex", sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
 }
 
 * {
@@ -178,14 +173,17 @@ body {
 .elevate-sm {
   box-shadow: 0 1px 2px oklch(var(--shadow-color) / 0.06), 0 1px 3px oklch(var(--shadow-color) / 0.05);
 }
+
 .elevate-md {
   box-shadow: 0 8px 24px -8px oklch(var(--shadow-color) / 0.14), 0 2px 8px -2px oklch(var(--shadow-color) / 0.08);
 }
+
 .elevate-lg {
   box-shadow: 0 24px 60px -20px oklch(var(--shadow-color) / 0.22);
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
