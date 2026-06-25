@@ -88,17 +88,6 @@ const features = [
   },
 ];
 
-const stack = [
-  "Next.js 15",
-  "tRPC",
-  "Postgres + Drizzle",
-  "Corsair",
-  "Better Auth",
-  "Inngest",
-  "OpenAI",
-  "Razorpay",
-];
-
 const freePlan = [
   "Unified inbox across all sources",
   "Email → calendar scheduling",
@@ -426,26 +415,6 @@ export default function LandingPage() {
               </div>
             </Reveal>
           </div>
-        </section>
-
-        {/* Stack */}
-        <section id="stack" className="mb-24 text-center">
-          <Reveal>
-            <h2 className="text-2xl font-semibold tracking-tight">
-              Built on a modern stack
-            </h2>
-            <div className="mt-6 flex flex-wrap justify-center gap-2">
-              {stack.map((s) => (
-                <Badge
-                  key={s}
-                  variant="secondary"
-                  className="px-3 py-1 text-sm"
-                >
-                  {s}
-                </Badge>
-              ))}
-            </div>
-          </Reveal>
         </section>
 
         <footer className="text-muted-foreground flex flex-col items-center gap-3 border-t py-10 text-sm md:flex-row md:justify-between">
