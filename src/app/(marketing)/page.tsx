@@ -448,30 +448,6 @@ export default function LandingPage() {
           </Reveal>
         </section>
 
-        {/* CTA */}
-        <Reveal className="mb-24">
-          <div className="from-primary to-azure text-primary-foreground relative overflow-hidden rounded-3xl bg-gradient-to-br px-8 py-16 text-center">
-            <div className="absolute inset-0 bg-[radial-gradient(40rem_20rem_at_80%_-20%,rgba(255,255,255,0.25),transparent)]" />
-            <h2 className="relative text-3xl font-semibold tracking-tight">
-              Get your time back.
-            </h2>
-            <p className="relative mx-auto mt-3 max-w-md opacity-90">
-              Join the workflow that decides what’s important so you don’t have
-              to.
-            </p>
-            <Button
-              asChild
-              size="lg"
-              variant="secondary"
-              className="relative mt-7"
-            >
-              <Link href="/login">
-                Start free <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-          </div>
-        </Reveal>
-
         <footer className="text-muted-foreground flex flex-col items-center gap-3 border-t py-10 text-sm md:flex-row md:justify-between">
           <Logo className="text-foreground text-sm" />
           <p>
