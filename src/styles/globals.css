@@ -5,103 +5,125 @@
 
 
 
-
-
 :root {
-  --radius: 0.875rem;
-  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --radius: 0.75rem;
+  --font-sans: "Inter", "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* cool graphite base — never pure white, zero violet cast */
-  --background: oklch(0.992 0.002 250);
-  --foreground: oklch(0.22 0.015 255);
+  /* LIGHT — crisp, faint-cool near-white */
+  --background: oklch(0.985 0.003 265);
+  --foreground: oklch(0.21 0.02 270);
 
   --card: oklch(1 0 0);
   --card-foreground: var(--foreground);
   --popover: oklch(1 0 0);
   --popover-foreground: var(--foreground);
 
-  --muted: oklch(0.965 0.004 250);
-  --muted-foreground: oklch(0.5 0.015 255);
+  --muted: oklch(0.965 0.005 265);
+  --muted-foreground: oklch(0.505 0.02 268);
 
-  --border: oklch(0.915 0.006 250);
-  --input: oklch(0.915 0.006 250);
-  --ring: oklch(0.62 0.14 195);
+  --border: oklch(0.915 0.006 265);
+  --input: oklch(0.915 0.006 265);
+  --ring: oklch(0.07 0.02 240);
+  /* Rich Black ring */
 
-  /* vibrant primary — teal — + azure secondary accent for gradients */
-  --primary: oklch(0.62 0.14 195);
-  --primary-foreground: oklch(0.99 0.002 250);
-  --azure: oklch(0.6 0.16 245);
+  /* PRIMARY — Rich Black (#010B13) with Power White foreground */
+  --primary: oklch(0.07 0.02 240);
+  /* #010B13 Rich Black */
+  --primary-foreground: oklch(0.955 0.008 220);
+  /* #EBF1F5 Power White */
 
-  --secondary: oklch(0.965 0.004 250);
-  --secondary-foreground: oklch(0.27 0.015 255);
-  --accent: oklch(0.95 0.03 195);
-  --accent-foreground: oklch(0.42 0.11 195);
-  --destructive: oklch(0.6 0.22 22);
-  --destructive-foreground: oklch(0.99 0.002 250);
+  /* companion tones — dark steel + cool slate (replacing violet/fuchsia) */
+  --violet: oklch(0.18 0.015 235);
+  /* deep navy-steel (was violet) */
+  --fuchsia: oklch(0.28 0.012 230);
+  /* mid steel-slate (was fuchsia) */
+  --cyan: oklch(0.66 0.14 215);
+  /* kept — only cyan unchanged */
+  --azure: var(--violet);
 
-  /* semantic signal scale (priority inbox) */
-  --urgent: oklch(0.6 0.22 22);
-  /* coral-red */
-  --reply: oklch(0.74 0.16 70);
-  /* amber */
+  --secondary: oklch(0.965 0.005 265);
+  --secondary-foreground: oklch(0.27 0.02 270);
+  --accent: oklch(0.93 0.006 225);
+  /* light Power White tint */
+  --accent-foreground: oklch(0.07 0.02 240);
+  /* Rich Black on accent */
+  --destructive: oklch(0.6 0.23 18);
+  --destructive-foreground: oklch(0.99 0.003 265);
+
+  /* priority signal scale — unchanged */
+  --urgent: oklch(0.6 0.23 18);
+  --reply: oklch(0.72 0.16 70);
   --waiting: oklch(0.6 0.13 235);
-  /* sky */
-  --done: oklch(0.66 0.15 162);
-  /* emerald */
-  --fyi: oklch(0.58 0.015 255);
-  /* slate */
+  --done: oklch(0.62 0.15 160);
+  --fyi: oklch(0.55 0.02 265);
 
-  /* per-source brand dots — slack is pink (hue 350), not purple */
+  /* per-source brand dots — unchanged */
   --source-gmail: oklch(0.62 0.21 27);
-  --source-calendar: oklch(0.6 0.17 245);
-  --source-slack: oklch(0.64 0.19 350);
-  --source-github: oklch(0.45 0.015 255);
+  --source-calendar: oklch(0.58 0.18 255);
+  --source-slack: oklch(0.62 0.2 350);
+  --source-github: oklch(0.45 0.02 265);
 
-  /* cool-tinted elevation */
-  --shadow-color: 0.2 0.02 255;
+  --shadow-color: 0.25 0.04 280;
 }
 
 .dark {
-  /* same hue family, lower lightness — cool graphite, never pure black */
-  --background: oklch(0.185 0.012 255);
-  --foreground: oklch(0.95 0.005 250);
+  /* DARK — Linear-deep blue-graphite, never pure black */
+  --background: oklch(0.17 0.013 266);
+  --foreground: oklch(0.955 0.005 265);
 
-  --card: oklch(0.225 0.014 255);
+  --card: oklch(0.205 0.014 266);
   --card-foreground: var(--foreground);
-  --popover: oklch(0.225 0.014 255);
+  --popover: oklch(0.205 0.014 266);
   --popover-foreground: var(--foreground);
 
-  --muted: oklch(0.27 0.014 255);
-  --muted-foreground: oklch(0.7 0.012 255);
+  --muted: oklch(0.255 0.014 266);
+  --muted-foreground: oklch(0.68 0.013 266);
 
-  --border: oklch(1 0 0 / 9%);
+  --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.74 0.13 195);
+  --ring: oklch(0.955 0.008 220);
+  /* Power White ring in dark mode */
 
-  --primary: oklch(0.74 0.13 195);
-  --primary-foreground: oklch(0.18 0.02 255);
-  --azure: oklch(0.7 0.14 245);
+  /* PRIMARY — Power White (#EBF1F5) becomes the accent in dark mode
+     so it pops against the dark canvas, Rich Black as its foreground */
+  --primary: oklch(0.955 0.008 220);
+  /* #EBF1F5 Power White */
+  --primary-foreground: oklch(0.07 0.02 240);
+  /* #010B13 Rich Black */
 
-  --secondary: oklch(0.27 0.014 255);
-  --secondary-foreground: oklch(0.95 0.005 250);
-  --accent: oklch(0.32 0.06 195);
-  --accent-foreground: oklch(0.9 0.04 195);
-  --destructive: oklch(0.7 0.2 22);
-  --destructive-foreground: oklch(0.96 0.005 250);
+  /* companion tones lifted for dark legibility */
+  --violet: oklch(0.82 0.008 225);
+  /* light cool-steel (was violet) */
+  --fuchsia: oklch(0.70 0.010 228);
+  /* mid cool-slate (was fuchsia) */
+  --cyan: oklch(0.78 0.13 210);
+  /* kept */
+  --azure: var(--violet);
 
-  --urgent: oklch(0.7 0.2 22);
-  --reply: oklch(0.8 0.15 72);
-  --waiting: oklch(0.7 0.13 235);
-  --done: oklch(0.76 0.14 162);
-  --fyi: oklch(0.72 0.015 255);
+  --secondary: oklch(0.255 0.014 266);
+  --secondary-foreground: oklch(0.955 0.005 265);
+  --accent: oklch(0.26 0.018 235);
+  /* dark steel tint */
+  --accent-foreground: oklch(0.955 0.008 220);
+  /* Power White on accent */
+  --destructive: oklch(0.7 0.2 18);
+  --destructive-foreground: oklch(0.96 0.005 265);
 
+  /* priority signal scale — unchanged */
+  --urgent: oklch(0.7 0.2 18);
+  --reply: oklch(0.82 0.15 78);
+  --waiting: oklch(0.72 0.13 235);
+  --done: oklch(0.76 0.14 160);
+  --fyi: oklch(0.72 0.012 266);
+
+  /* per-source brand dots — unchanged */
   --source-gmail: oklch(0.72 0.18 27);
-  --source-calendar: oklch(0.72 0.15 245);
-  --source-slack: oklch(0.76 0.16 350);
-  --source-github: oklch(0.82 0.012 255);
+  --source-calendar: oklch(0.74 0.15 255);
+  --source-slack: oklch(0.76 0.17 350);
+  --source-github: oklch(0.84 0.012 266);
 
-  --shadow-color: 0 0 0;
+  --shadow-color: 0.02 0 280;
 }
 
 @theme inline {
@@ -113,6 +135,9 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-violet: var(--violet);
+  --color-fuchsia: var(--fuchsia);
+  --color-cyan: var(--cyan);
   --color-azure: var(--azure);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -141,7 +166,8 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
 * {
@@ -153,33 +179,133 @@ body {
   background: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+  letter-spacing: -0.011em;
   -webkit-font-smoothing: antialiased;
 }
 
-/* tabular numbers for dashboards / stats */
+::selection {
+  background: color-mix(in oklch, var(--color-primary) 32%, transparent);
+}
+
 .tnum {
   font-variant-numeric: tabular-nums;
 }
 
-/* soft cool wash so the app canvas is never flat/harsh (no purple) */
+.font-mono,
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* ---- signature ambient aurora canvas ---- */
 .app-canvas {
+  position: relative;
   background:
-    radial-gradient(56rem 40rem at 88% -12%, color-mix(in oklch, var(--color-primary) 7%, transparent), transparent),
-    radial-gradient(46rem 36rem at 0% 8%, color-mix(in oklch, var(--color-azure) 6%, transparent), transparent),
+    radial-gradient(52rem 38rem at 10% -10%, color-mix(in oklch, var(--color-primary) 13%, transparent), transparent 58%),
+    radial-gradient(46rem 36rem at 96% 2%, color-mix(in oklch, var(--color-fuchsia) 9%, transparent), transparent 56%),
+    radial-gradient(42rem 34rem at 60% 110%, color-mix(in oklch, var(--color-cyan) 8%, transparent), transparent 60%),
     var(--color-background);
 }
 
-/* shared elevation utilities tuned to the cool neutral */
+.dark .app-canvas {
+  background:
+    radial-gradient(52rem 38rem at 10% -10%, color-mix(in oklch, var(--color-primary) 16%, transparent), transparent 56%),
+    radial-gradient(46rem 36rem at 96% 2%, color-mix(in oklch, var(--color-fuchsia) 9%, transparent), transparent 54%),
+    radial-gradient(42rem 34rem at 60% 110%, color-mix(in oklch, var(--color-cyan) 7%, transparent), transparent 58%),
+    var(--color-background);
+}
+
+/* glass surface for floating chrome (topbar, nav, palette) */
+.glass {
+  background: color-mix(in oklch, var(--color-card) 62%, transparent);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+}
+
+/* gradient text + brand gradient fill */
+.text-gradient {
+  background: linear-gradient(110deg, var(--color-primary), var(--color-violet) 45%, var(--color-fuchsia));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.bg-brand {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-violet) 55%, var(--color-fuchsia));
+}
+
+/* primary-accent glow ring on hover/focus moments */
+.glow {
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--color-primary) 30%, transparent),
+    0 8px 30px -10px color-mix(in oklch, var(--color-primary) 55%, transparent);
+}
+
+/* elevation utilities, tuned to the cool neutral */
 .elevate-sm {
-  box-shadow: 0 1px 2px oklch(var(--shadow-color) / 0.06), 0 1px 3px oklch(var(--shadow-color) / 0.05);
+  box-shadow: 0 1px 2px oklch(var(--shadow-color) / 0.16);
 }
 
 .elevate-md {
-  box-shadow: 0 8px 24px -8px oklch(var(--shadow-color) / 0.14), 0 2px 8px -2px oklch(var(--shadow-color) / 0.08);
+  box-shadow: 0 10px 30px -14px oklch(var(--shadow-color) / 0.36), 0 2px 6px -2px oklch(var(--shadow-color) / 0.12);
 }
 
 .elevate-lg {
-  box-shadow: 0 24px 60px -20px oklch(var(--shadow-color) / 0.22);
+  box-shadow: 0 36px 80px -32px oklch(var(--shadow-color) / 0.55);
+}
+
+/* a thin animated spectrum line — used under active nav / hero accents */
+.spectrum {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-violet), var(--color-fuchsia), var(--color-cyan), var(--color-primary));
+  background-size: 300% 100%;
+  animation: spectrum-pan 6s linear infinite;
+}
+
+@keyframes spectrum-pan {
+  to {
+    background-position: 300% 0;
+  }
+}
+
+/* shimmer for skeleton / loading states */
+.shimmer {
+  background: linear-gradient(100deg, transparent 20%, color-mix(in oklch, var(--color-foreground) 6%, transparent) 40%, transparent 60%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* card hover-lift, opt-in via .card-lift */
+.card-lift {
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.card-lift:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in oklch, var(--color-foreground) 14%, transparent);
+  box-shadow: 0 16px 40px -18px oklch(var(--shadow-color) / 0.42);
+}
+
+/* scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--color-foreground) 14%, transparent);
+  border-radius: 99px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklch, var(--color-foreground) 24%, transparent);
+  background-clip: padding-box;
 }
 
 @media (prefers-reduced-motion: reduce) {
