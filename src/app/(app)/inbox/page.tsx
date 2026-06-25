@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   RefreshCw,
   Search as SearchIcon,
@@ -66,6 +66,23 @@ export default function InboxPage() {
   const refresh = api.gmail.refreshInbox.useMutation({
     onSuccess: () => utils.gmail.searchEmails.invalidate(),
   });
+
+  // Auto-sync once when the inbox first loads empty, so a freshly-connected
+  // user sees their mail without having to hunt for the Refresh button. Guarded
+  // by a ref so it never loops if the mailbox is genuinely empty.
+  const autoSynced = useRef(false);
+  useEffect(() => {
+    if (
+      !autoSynced.current &&
+      !activeSearch &&
+      emails.isSuccess &&
+      emails.data.length === 0 &&
+      !refresh.isPending
+    ) {
+      autoSynced.current = true;
+      refresh.mutate(undefined);
+    }
+  }, [emails.isSuccess, emails.data, activeSearch, refresh]);
 
   const triage = api.ai.classifyInbox.useMutation({
     onSuccess: (rows) =>

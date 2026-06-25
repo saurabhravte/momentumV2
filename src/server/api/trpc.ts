@@ -78,12 +78,14 @@ export const createTRPCRouter = t.router;
 
 const timingMiddleware = t.middleware(async ({ next, path }) => {
   const start = Date.now();
-  if (t._config.isDev) {
-    const waitMs = Math.floor(Math.random() * 400) + 100;
-    await new Promise((resolve) => setTimeout(resolve, waitMs));
-  }
+  // NOTE: the create-t3-app starter injects an artificial 100–500ms delay here
+  // "to simulate network latency". On a real app it makes *every* tab switch,
+  // settings toggle and refetch feel sluggish (each query/mutation paid the
+  // tax). Removed — we only keep the lightweight timing log in dev.
   const result = await next();
-  console.log(`[TRPC] ${path} took ${Date.now() - start}ms to execute`);
+  if (t._config.isDev) {
+    console.log(`[TRPC] ${path} took ${Date.now() - start}ms to execute`);
+  }
   return result;
 });
 

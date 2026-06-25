@@ -28,7 +28,21 @@ export function SettingsClient({
   const utils = api.useUtils();
   const prefs = api.preferences.get.useQuery();
   const updatePrefs = api.preferences.update.useMutation({
-    onSuccess: () => utils.preferences.get.invalidate(),
+    // Optimistic: flip the selected option in the cache immediately so the UI
+    // responds on click instead of waiting for the server round-trip + refetch
+    // (which is what made customisation feel laggy).
+    onMutate: async (patch) => {
+      await utils.preferences.get.cancel();
+      const prev = utils.preferences.get.getData();
+      utils.preferences.get.setData(undefined, (old) =>
+        old ? { ...old, ...patch } : old,
+      );
+      return { prev };
+    },
+    onError: (_e, _patch, ctx) => {
+      if (ctx?.prev) utils.preferences.get.setData(undefined, ctx.prev);
+    },
+    onSettled: () => utils.preferences.get.invalidate(),
   });
 
   const saveProfile = async () => {

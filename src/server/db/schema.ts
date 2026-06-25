@@ -20,6 +20,16 @@ import { user } from "./auth-schema";
 export const KANBAN_COLUMNS = ["todo", "in_progress", "done"] as const;
 export type KanbanColumn = (typeof KANBAN_COLUMNS)[number];
 
+// Card priority. "normal" is the default; "urgent" / "awaited" surface visually
+// and sort to the top of their column.
+export const KANBAN_PRIORITIES = [
+  "urgent",
+  "awaited",
+  "normal",
+  "low",
+] as const;
+export type KanbanPriority = (typeof KANBAN_PRIORITIES)[number];
+
 export const kanbanTasks = pgTable("kanban_tasks", {
   id: text("id").primaryKey(),
   userId: text("user_id")
@@ -28,6 +38,8 @@ export const kanbanTasks = pgTable("kanban_tasks", {
   title: text("title").notNull(),
   // "todo" | "in_progress" | "done"
   status: text("status").notNull().default("todo"),
+  // "urgent" | "awaited" | "normal" | "low"
+  priority: text("priority").notNull().default("normal"),
   position: integer("position").notNull().default(0),
   // optional link back to the item that spawned this task (email id, etc.)
   sourceRef: text("source_ref"),

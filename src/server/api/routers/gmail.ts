@@ -104,7 +104,11 @@ export const gmailRouter = createTRPCRouter({
       const tenant = getTenant(ctx.user.id);
       const cached = await tenant.gmail.db.messages.findByEntityId(input.id);
 
-      if (cached?.data.body || cached?.data.subject) {
+      // Only short-circuit when we actually have the body cached. A message that
+      // was only seen via messages.list (id/threadId stub) or a metadata-only
+      // sync has a subject but no body — serving that would show an empty
+      // reading pane forever. Fall through to a full fetch in that case.
+      if (cached?.data.body) {
         return {
           id: cached.entity_id,
           threadId: cached.data.threadId ?? "",
@@ -160,14 +164,52 @@ export const gmailRouter = createTRPCRouter({
       }));
     }),
 
-  refreshInbox: protectedProcedure.mutation(async ({ ctx }) => {
-    await ensureCorsairGoogle(ctx.user.id);
-    const tenant = getTenant(ctx.user.id);
-    const result = await tenant.gmail.api.threads.list({ maxResults: 50 });
-    return {
-      synced: result.threads?.length ?? 0,
-    };
-  }),
+  /**
+   * Sync the inbox into the local cache.
+   *
+   * THE USP BUG: this used to call `gmail.api.threads.list(...)`, which only
+   * writes to the `threads` cache. But every read path (this router's
+   * searchEmails, the dashboard, notifications) reads from `gmail.db.messages`.
+   * Result: "sync" reported a count, yet the inbox/dashboard stayed empty —
+   * nothing the UI reads was ever populated.
+   *
+   * Correct sync: list message ids (populates message stubs), then hydrate each
+   * with a `messages.get` so subject / from / snippet / body land in the
+   * `messages` cache the inbox renders from. Hydration is bounded + concurrency
+   * limited so a large mailbox doesn't hammer the Gmail API.
+   */
+  refreshInbox: protectedProcedure
+    .input(
+      z
+        .object({ limit: z.number().min(1).max(100).default(40) })
+        .optional(),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ensureCorsairGoogle(ctx.user.id);
+      const tenant = getTenant(ctx.user.id);
+
+      const list = await tenant.gmail.api.messages.list({
+        maxResults: input?.limit ?? 40,
+      });
+      const ids = (list.messages ?? [])
+        .map((m) => m.id)
+        .filter((id): id is string => Boolean(id));
+
+      // Hydrate full message content into the cache, 6 requests at a time.
+      let synced = 0;
+      const CONCURRENCY = 6;
+      for (let i = 0; i < ids.length; i += CONCURRENCY) {
+        const batch = ids.slice(i, i + CONCURRENCY);
+        const results = await Promise.allSettled(
+          batch.map((id) =>
+            tenant.gmail.api.messages.get({ id, format: "full" }),
+          ),
+        );
+        synced += results.filter((r) => r.status === "fulfilled").length;
+      }
+
+      return { synced };
+    }),
 
   createDraft: protectedProcedure
     .input(

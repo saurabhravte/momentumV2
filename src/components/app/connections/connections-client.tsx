@@ -10,10 +10,13 @@ import {
   Plug,
   Check,
   Loader2,
+  X,
+  ExternalLink,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { getWeekBounds } from "@/lib/week";
 import { api } from "@/trpc/react";
 
@@ -31,16 +34,48 @@ const DESC: Record<string, string> = {
   github: "Reviews, mentions and CI in one place.",
 };
 
-// What a user pastes to connect a token-based tool.
-const TOKEN_PROMPT: Record<string, string> = {
-  slack: "Paste your Slack token (starts with xoxb- or xoxp-):",
-  github: "Paste a GitHub personal access token (starts with ghp_):",
+// Step-by-step instructions shown in the connect modal for token-based tools.
+type TokenGuide = {
+  title: string;
+  tokenHint: string;
+  placeholder: string;
+  docsUrl: string;
+  steps: string[];
+};
+
+const TOKEN_GUIDES: Record<"slack" | "github", TokenGuide> = {
+  slack: {
+    title: "Connect Slack",
+    tokenHint: "Bot or user token — starts with xoxb- or xoxp-",
+    placeholder: "xoxb-...",
+    docsUrl: "https://api.slack.com/apps",
+    steps: [
+      "Go to api.slack.com/apps and click “Create New App” → “From scratch”. Pick a name and your workspace.",
+      "In the sidebar open “OAuth & Permissions”. Under “Scopes → Bot Token Scopes” add: channels:read, channels:history, chat:write, users:read.",
+      "Scroll up and click “Install to Workspace”, then “Allow”.",
+      "Copy the “Bot User OAuth Token” (it starts with xoxb-) and paste it below.",
+    ],
+  },
+  github: {
+    title: "Connect GitHub",
+    tokenHint: "Personal access token — starts with ghp_ (classic) or github_pat_",
+    placeholder: "ghp_...",
+    docsUrl: "https://github.com/settings/tokens",
+    steps: [
+      "Go to github.com/settings/tokens → “Generate new token” → “Generate new token (classic)”.",
+      "Give it a name and an expiry. Under “Select scopes” tick: repo and notifications (read:org is optional for org mentions).",
+      "Click “Generate token” at the bottom.",
+      "Copy the token shown (you only see it once) and paste it below.",
+    ],
+  },
 };
 
 export function ConnectionsClient() {
   const utils = api.useUtils();
   const status = api.connections.status.useQuery();
   const [busy, setBusy] = useState<string | null>(null);
+  // Which token tool's connect modal is open.
+  const [tokenModal, setTokenModal] = useState<"slack" | "github" | null>(null);
 
   const refreshInbox = api.gmail.refreshInbox.useMutation();
   const refreshEvents = api.calendar.refreshEvents.useMutation();
@@ -59,7 +94,7 @@ export function ConnectionsClient() {
   };
 
   const syncData = async (key: string) => {
-    if (key === "gmail") await refreshInbox.mutateAsync();
+    if (key === "gmail") await refreshInbox.mutateAsync(undefined);
     if (key === "googlecalendar")
       await refreshEvents.mutateAsync({
         weekStart: week.start.toISOString(),
@@ -67,25 +102,36 @@ export function ConnectionsClient() {
       });
   };
 
-  // Connect (and immediately sync) a tool.
+  // Connect a tool. Google reuses the sign-in grant; token tools open a modal.
   const connect = async (key: string, kind: string) => {
+    if (kind === "token") {
+      setTokenModal(key as "slack" | "github");
+      return;
+    }
     setBusy(key);
     try {
-      if (kind === "google") {
-        await connectGoogle.mutateAsync();
-        await syncData(key);
-      } else if (kind === "token") {
-        const token = window.prompt(TOKEN_PROMPT[key] ?? "Paste your token:");
-        if (!token) return;
-        await connectToken.mutateAsync({
-          key: key as "slack" | "github",
-          token,
-        });
-      }
+      await connectGoogle.mutateAsync();
+      await syncData(key);
       await revalidate();
     } catch (err) {
       window.alert(
         err instanceof Error ? err.message : "Couldn't connect. Try again.",
+      );
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  // Submit a pasted token from the modal.
+  const submitToken = async (key: "slack" | "github", token: string) => {
+    setBusy(key);
+    try {
+      await connectToken.mutateAsync({ key, token });
+      setTokenModal(null);
+      await revalidate();
+    } catch (err) {
+      window.alert(
+        err instanceof Error ? err.message : "Couldn't connect. Check the token.",
       );
     } finally {
       setBusy(null);
@@ -126,7 +172,8 @@ export function ConnectionsClient() {
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">Connections</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Connect your tools once — Momentum keeps everything in sync.
+          Connect the tools you want — each one is yours to connect, sync, or
+          disconnect at any time.
         </p>
       </div>
 
@@ -241,6 +288,103 @@ export function ConnectionsClient() {
         connect with a token you paste. Disconnecting removes synced data from
         Momentum but never touches the underlying account.
       </p>
+
+      {tokenModal && (
+        <TokenConnectModal
+          guide={TOKEN_GUIDES[tokenModal]}
+          busy={busy === tokenModal}
+          onClose={() => setTokenModal(null)}
+          onSubmit={(token) => submitToken(tokenModal, token)}
+        />
+      )}
+    </div>
+  );
+}
+
+function TokenConnectModal({
+  guide,
+  busy,
+  onClose,
+  onSubmit,
+}: {
+  guide: TokenGuide;
+  busy: boolean;
+  onClose: () => void;
+  onSubmit: (token: string) => void;
+}) {
+  const [token, setToken] = useState("");
+  const valid = token.trim().length >= 10;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-card w-full max-w-lg rounded-2xl border p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between">
+          <h2 className="text-lg font-semibold">{guide.title}</h2>
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground"
+            aria-label="Close"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <ol className="mt-4 space-y-2.5">
+          {guide.steps.map((step, i) => (
+            <li key={i} className="flex gap-2.5 text-sm">
+              <span className="bg-primary/10 text-primary grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-semibold">
+                {i + 1}
+              </span>
+              <span className="text-muted-foreground leading-snug">{step}</span>
+            </li>
+          ))}
+        </ol>
+
+        <a
+          href={guide.docsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary mt-3 inline-flex items-center gap-1 text-xs hover:underline"
+        >
+          Open the setup page <ExternalLink className="size-3" />
+        </a>
+
+        <label className="text-muted-foreground mt-5 mb-1 block text-xs">
+          {guide.tokenHint}
+        </label>
+        <Input
+          autoFocus
+          value={token}
+          placeholder={guide.placeholder}
+          onChange={(e) => setToken(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && valid && !busy) onSubmit(token.trim());
+          }}
+        />
+
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            disabled={!valid || busy}
+            onClick={() => onSubmit(token.trim())}
+          >
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Plug className="size-4" />}
+            Connect
+          </Button>
+        </div>
+        <p className="text-muted-foreground mt-3 text-[11px]">
+          Your token is stored encrypted per-account and is never shown again.
+        </p>
+      </div>
     </div>
   );
 }

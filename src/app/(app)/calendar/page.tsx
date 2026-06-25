@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -79,6 +79,26 @@ export default function CalendarPage() {
   const refresh = api.calendar.refreshEvents.useMutation({
     onSuccess: () => utils.calendar.searchEvents.invalidate(),
   });
+
+  // Auto-sync the visible week the first time it loads with no cached events,
+  // so events show up without a manual "Sync" click. Re-arms per week so
+  // navigating to a not-yet-synced week pulls it in too.
+  const autoSyncedWeek = useRef<string | null>(null);
+  useEffect(() => {
+    const weekKey = week.start.toISOString();
+    if (
+      autoSyncedWeek.current !== weekKey &&
+      events.isSuccess &&
+      events.data.length === 0 &&
+      !refresh.isPending
+    ) {
+      autoSyncedWeek.current = weekKey;
+      refresh.mutate({
+        weekStart: week.start.toISOString(),
+        weekEnd: week.end.toISOString(),
+      });
+    }
+  }, [events.isSuccess, events.data, week.start, week.end, refresh]);
 
   // Seven day Date objects for the visible week.
   const days = useMemo(

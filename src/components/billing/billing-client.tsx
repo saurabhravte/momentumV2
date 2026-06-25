@@ -32,6 +32,9 @@ export function BillingClient() {
 
   const plan = status.data?.plan ?? "free";
   const isPro = plan === "pro";
+  // When the deployment has no Razorpay keys, billing is off. Show a clear
+  // disabled state instead of an "Upgrade" button that errors on click.
+  const billingEnabled = status.data?.billingEnabled ?? false;
 
   return (
     <div className="mx-auto max-w-3xl p-6 lg:p-8">
@@ -109,7 +112,7 @@ export function BillingClient() {
             >
               {cancel.isPending ? "Cancelling…" : "Cancel at period end"}
             </Button>
-          ) : (
+          ) : billingEnabled ? (
             <Button
               className="mt-6 w-full"
               disabled={loading}
@@ -119,6 +122,16 @@ export function BillingClient() {
             >
               {loading ? "Opening checkout…" : "Upgrade to Pro"}
             </Button>
+          ) : (
+            <>
+              <Button className="mt-6 w-full" disabled>
+                Billing not available
+              </Button>
+              <p className="text-muted-foreground mt-2 text-center text-xs">
+                Payments aren&apos;t configured on this deployment yet. Set the
+                RAZORPAY_* environment variables to enable Pro upgrades.
+              </p>
+            </>
           )}
           <p className="text-muted-foreground mt-3 text-center text-xs">
             Payments secured by Razorpay

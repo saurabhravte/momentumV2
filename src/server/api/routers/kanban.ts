@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { kanbanTasks, KANBAN_COLUMNS } from "@/server/db/schema";
+import { kanbanTasks, KANBAN_COLUMNS, KANBAN_PRIORITIES } from "@/server/db/schema";
 
 /**
  * Kanban board, ported from the reference HTML/JS demo (To Do / In Progress /
@@ -13,6 +13,7 @@ import { kanbanTasks, KANBAN_COLUMNS } from "@/server/db/schema";
  * delete another user's card even if they guess an id.
  */
 const columnEnum = z.enum(KANBAN_COLUMNS);
+const priorityEnum = z.enum(KANBAN_PRIORITIES);
 
 export const kanbanRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx }) => {
@@ -32,6 +33,7 @@ export const kanbanRouter = createTRPCRouter({
       z.object({
         title: z.string().min(1).max(500),
         status: columnEnum.default("todo"),
+        priority: priorityEnum.default("normal"),
         sourceRef: z.string().optional(),
       }),
     )
@@ -56,6 +58,7 @@ export const kanbanRouter = createTRPCRouter({
           userId: ctx.user.id,
           title: input.title,
           status: input.status,
+          priority: input.priority,
           position: nextPos,
           sourceRef: input.sourceRef,
         })
@@ -92,19 +95,39 @@ export const kanbanRouter = createTRPCRouter({
       return res[0];
     }),
 
-  rename: protectedProcedure
-    .input(z.object({ id: z.string(), title: z.string().min(1).max(500) }))
+  /** Edit a card's title and/or priority (the pen-icon editor). */
+  update: protectedProcedure
+    .input(
+      z
+        .object({
+          id: z.string(),
+          title: z.string().min(1).max(500).optional(),
+          priority: priorityEnum.optional(),
+        })
+        .refine((v) => v.title !== undefined || v.priority !== undefined, {
+          message: "Nothing to update.",
+        }),
+    )
     .mutation(async ({ ctx, input }) => {
-      await ctx.db
+      const patch: { title?: string; priority?: string; updatedAt: Date } = {
+        updatedAt: new Date(),
+      };
+      if (input.title !== undefined) patch.title = input.title;
+      if (input.priority !== undefined) patch.priority = input.priority;
+
+      const res = await ctx.db
         .update(kanbanTasks)
-        .set({ title: input.title, updatedAt: new Date() })
+        .set(patch)
         .where(
           and(
             eq(kanbanTasks.id, input.id),
             eq(kanbanTasks.userId, ctx.user.id),
           ),
-        );
-      return { ok: true };
+        )
+        .returning();
+      if (res.length === 0)
+        throw new TRPCError({ code: "NOT_FOUND", message: "Task not found." });
+      return res[0];
     }),
 
   remove: protectedProcedure
